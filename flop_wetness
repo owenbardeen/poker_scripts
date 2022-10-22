@@ -1,0 +1,60 @@
+# determines wetness of flop - useful for determining whether or not to c-bet and bet sizing
+# bone dry = 0
+# dry = 1
+# semi-dry/semi-wet = 2
+# wet = 3
+# soaking wet = 4
+def assess_wetness(card1, card2, card3):
+    # determines how "wet" a flop is
+    wetness = 0
+
+    # suitedness
+    if (card1[2] == card2[2] and card2[2] == card3[2]):
+        wetness += 2
+    elif (card1[2] == card2[2] or card2[2] == card3[2] or card1[2] == card3[2]):
+        wetness += 1
+    values = [card1[1], card2[1], card3[1]]
+    first = max(values)
+    values.remove(first)
+    second = max(values)
+    values.remove(second)
+    third = values[0]
+    sorted_values = [first, second, third]
+    d1 = first-second
+    d2 = second - third
+
+    # paired boards
+    if (first[1] == second[1] or second[1] == third[1] or first[1] == third[1]):
+        return 0
+        # bone dry
+
+    # how many overcards
+    # I'll call everything greater than a J (12+) an overcard
+    if (first[1] > 11):
+        if (second[1] > 11):
+            if (third > 11):
+                wetness += 2
+            else:
+                wetness += 1
+        else:
+            wetness += 0
+    else:
+        wetness += 0
+
+    # connectedness
+    connectedness = 0
+    if (first[1] - second[1] == 1):
+        connectedness += 1
+    elif (first[1] - second[1] == 2):
+        connectedness += .75
+    if (second[1] - third[1] == 1):
+        connectedness += 1
+    elif (second[1] - third[1] == 2):
+        connectedness += .75
+    
+    wetness += connectedness
+
+    if (wetness > 4):
+        return 4
+    else:
+        return wetness // 1
