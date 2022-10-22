@@ -1,0 +1,38 @@
+# simulates a number of flops to see how often certain kinds of hands "connect" with the flop, and in what way
+def stats():
+    num_one_pair = 0
+    num_two_pair = 0
+    num_trips = 0
+    num_flush_draw = 0
+    for i in range(10000):
+        crds = construct()
+        possible_cards = crds
+        card1 = random.choice(possible_cards)
+        possible_cards.remove(card1)
+        card2 = random.choice(possible_cards)
+        possible_cards.remove(card2)
+        my_hand = [card1, card2]
+        card3 = random.choice(possible_cards)
+        possible_cards.remove(card3)
+        card4 = random.choice(possible_cards)
+        possible_cards.remove(card4)
+        card5 = random.choice(possible_cards)
+        possible_cards.remove(card5)
+        flop = [card3, card4, card5]
+        hand = [card1, card2, card3, card4, card5]
+        if has_trips(hand):
+            num_trips += 1
+        elif has_two_pairs(hand):
+            num_two_pair += 1
+        elif has_one_pair(hand):
+            num_one_pair += 1
+        if has_flush_draw(hand):
+            num_flush_draw += 1
+    one_pair_percent = num_one_pair / 100
+    two_pair_percent = num_two_pair / 100
+    trips_percent = num_trips / 100
+    flushdrawpercent = num_flush_draw / 100
+    print("Percentage of flopped one pairs: " + one_pair_percent.toString())
+    print("Percentage of flopped two pairs: " + two_pair_percent.toString())
+    print("Percentage of flopped trips: " + trips_percent.toString())
+    print("Percentage of flopped flush draws: " + flushdrawpercent.toString())
