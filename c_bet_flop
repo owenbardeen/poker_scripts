@@ -1,0 +1,29 @@
+# gives user their cards and the flop, and tells them whether or not they should C-bet
+# currently working on this
+def c_bet():
+    cards = construct()
+    card1 = random.choice(cards)
+    cards.remove(card1)
+    card2 = random.choice(cards)
+    cards.remove(card2)
+    card3 = random.choice(cards)
+    cards.remove(card3)
+    hand1 = random.choice(cards)
+    cards.remove(hand1)
+    hand2 = random.choice(cards)
+
+    print("Flop: " + card1[0] + " + " card2[0] + " + " + card3[0] + "\n")
+    print("Your hand: " + hand1[0] + " + " + hand2[0] + "\n")
+
+    wetness = assess_wetness(flop)
+    hand = [card1, card2, card3, hand1, hand2]
+    value = find_value(hand)
+    cbet = false
+    if (value < 2):
+        cbet = true
+
+    if cbet:
+        if (wetness > 2):
+            print("no cbet")
+        else:
+            print("cbet")
