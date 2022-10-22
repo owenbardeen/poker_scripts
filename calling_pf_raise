@@ -1,0 +1,89 @@
+# gives user their cards, position, and previous pre-flop action, prompting them to either call, 3-bet, or fold.
+def calling_pf_raise():
+    # calling PF raise
+    hjvsutg_range = [[0 for _ in range(rows)] for _ in range(cols)]
+    covsutg_range = [[0 for _ in range(rows)] for _ in range(cols)]
+    covshj_range = [[0 for _ in range(rows)] for _ in range(cols)]
+    buvshj_range = [[0 for _ in range(rows)] for _ in range(cols)]
+    buvsco_range = [[0 for _ in range(rows)] for _ in range(cols)]
+
+    # HJ versus UTG range
+    for i in range(9):
+        hjvsutg_range[i][i] = 1
+    hjvsutg_range[0][1] = hjvsutg_range[0][2] = hjvsutg_range[0][3] = hjvsutg_range[1][0] = hjvsutg_range[1][2] = hjvsutg_range[2][0] = 1
+
+    # CO vs UTG range
+    for i in range(10):
+        covsutg_range[i][i] = 1
+    covsutg_range[0][1] = covsutg_range[0][2] = covsutg_range[0][3] = covsutg_range[1][0] = covsutg_range[1][2] = covsutg_range[2][0] = covsutg_range[2][3] = 1
+
+    # BU vs UTG range
+    buvsutg_range = covsutg_range
+    for i in range(9, 13):
+        buvsutg_range[i][i] = 1
+    buvsutg_range[0][4] = buvsutg_range[1][3] = buvsutg_range[3][4] = buvsutg_range[4][5]
+
+    # CO vs HJ range
+    for i in range(3):
+        for j in range(4):
+            covshj_range[i][j] = 1
+    for i in range(3, 9):
+        covshj_range[i][i] = 1
+    covshj_range[0][4] = covshj_range[3][0] = covshj_range[3][4] = 1
+
+    # BU vs HJ range
+    buvshj_range = covshj_range
+    for i in range(9, 13):
+        buvshj_range[i][i] = 1
+    buvshj_range[2][4] = buvshj_range[4][5] = 1
+
+    # BU vs CO range
+    for i in range(3):
+        for j in range(5):
+            buvsco_range[i][j] = 1
+    for i in range(3, 8):
+        buvsco_range[i-1][i] = buvsco_range[i][i] = 1
+    buvsco_range[0][5] = buvsco_range[0][6] = buvsco_range[3][0] = buvsco_range[3][1] = buvsco_range[4][0] = buvsco_range[8][8] = 1
+
+    altered_positions = positions[:3]
+    raise_position = random.choice(altered_positions)
+    altered2 = positions[:4]
+    your_position = random.choice(altered2)
+    while your_position[2] <= raise_position[2]:
+        your_position = random.choice(positions)
+    possible_cards = cards
+    card1 = random.choice(possible_cards)
+    possible_cards.remove(card1)
+    card2 = random.choice(possible_cards)
+    position = random.choice(positions)
+    print("Your cards: \n")
+    print(name(card1) + "\n")
+    print(name(card2) + "\n")
+    print("Your position: \n")
+    print(your_position[0] + " (" + your_position[1] + " after the BB) \n")
+    print("Facing a raise from the " + raise_position[0] + "\n")
+
+    relevant_chart = [[0 for _ in range(rows)] for _ in range(cols)]
+    if (raise_position[2] == 1): # SB
+        if (your_position[2] == 2):
+            relevant_chart = hjvsutg_range
+        elif (your_position[2] == 3):
+            relevant_chart = covsutg_range
+        else:
+            relevant_chart = buvsutg_range
+    elif (raise_position[2] == 2): # HJ
+        if (your_position[2] == 3):
+            relevant_chart = covshj_range
+        else:
+            relevant_chart = buvshj_range
+    else:
+        relevant_chart = buvsco_range
+
+    a, b = indices(card1, card2)
+    decision = input("Correct play? (call/fold) \n")
+    if (relevant_chart[a][b]) & (decision == 'call'):
+        print("correct!")
+    else if (relevant_chart[a][b] == 0) & (decision == 'fold'):
+        print("correct!")
+    else:
+        print("wrong")
