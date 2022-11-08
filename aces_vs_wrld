@@ -1,0 +1,31 @@
+# code to see how often aces is out-flopped by five opponents
+# found to be about 19% of the time, a testament to its power. Does not speak on raw equity, however.
+def aces_vs_wrld():
+    a = 0
+    for i in range(10000):
+        my_cards = construct()
+        my_hand = [["ace of hearts", 14, "spades"], ["ace_of_spades", 14, "spades"]]
+        my_cards.remove(["ace of hearts", 14, "spades"])
+        my_cards.remove(["ace_of_spades", 14, "spades"])
+        other_cards = []
+        for i in range(13):
+            card = random.choice(my_cards)
+            other_cards.append(card)
+            my_cards.remove(card)
+        flop = other_cards[0:3]
+        hand1 = other_cards[3:5]
+        hand2 = other_cards[5:7]
+        hand3 = other_cards[7:9]
+        hand4 = other_cards[9:11]
+        hand5 = other_cards[11:]
+        hands = [hand1, hand2, hand3, hand4, hand5]
+        this_hand = my_hand + flop
+        my_value = find_value(this_hand)
+        for hand in hands:
+            new_hand = hand + flop
+            if find_value(new_hand) > my_value:
+                a+=1
+                break
+    ratio = a/10000
+    ratio = str(ratio)
+    print("Proportion of times aces is out-flopped (six-handed): " + ratio)
