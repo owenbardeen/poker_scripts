@@ -15,15 +15,19 @@ def c_bet():
     print("Flop: " + card1[0] + " + " card2[0] + " + " + card3[0] + "\n")
     print("Your hand: " + hand1[0] + " + " + hand2[0] + "\n")
 
+    flop = [card1, card2, card3]
     wetness = assess_wetness(flop)
     hand = [card1, card2, card3, hand1, hand2]
     value = find_value(hand)
     cbet = false
-    if (value < 2):
-        cbet = true
+    if (has_flush_draw(hand) | (value(hand) >= 4) | has_open_straight_draw(hand) | has_gutshot(hand)):
+        cbet = True
+    elif (assess_wetness(flop) > 2):
+        cbet = True
+    else:
+        cbet = False
 
     if cbet:
-        if (wetness > 2):
-            print("no cbet")
-        else:
-            print("cbet")
+        print("Cbet")
+    else:
+        print("no cbet")
