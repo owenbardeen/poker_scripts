@@ -112,3 +112,64 @@ def find_value(hand):
     else:
         x = 2
     return x + (highest/100)
+
+def has_top_pair(hand, flop):
+    flop_values = [number(card) for card in flop]
+    highest = max(flop_values)
+    hand_values = [number(card) for card in flop]
+    if hand_values[1] == highest or hand_values[0] == highest:
+        return True
+    else:
+        return False
+
+def has_middle_pair(hand, flop):
+    flop_values = [number(card) for card in flop]
+    highest = max(flop_values)
+    flop_values.remove(highest)
+    next_highest = max(flop_values)
+    hand_values = [number(card) for card in flop]
+    if hand_values[1] == next_highest or hand_values[0] == next_highest:
+        return True
+    else:
+        return False
+
+ def has_bottom_pair(hand, flop):
+    flop_values = [number(card) for card in flop]
+    lowest = min(flop_values)
+    hand_values = [number(card) for card in flop]
+    if hand_values[1] == lowest or hand_values[0] == lowest:
+        return True
+    else:
+        return False
+ 
+def has_flush_draw(hand):
+    total = 0
+    suits = [suit(card) for card in hand]
+    for a in suits:
+        for b in suits:
+            if a == b:
+                total += 1
+    return (total == 16)
+
+def has_open_straight_draw(hand):
+    sorted = sort(hand)
+    differences = [sorted[i+1] - sorted[i] for i in range(4)]
+    num = 0
+    for i in differences:
+        if i == 1:
+            num += 1
+    return (num == 3)
+
+def has_gutshot(hand):
+    sorted = sort(hand)
+    differences = [sorted[i+1] - sorted[i] for i in range(4)]
+    # [1, 2, 1, x]
+    if (1 in differences):
+        differences.remove(1)
+    else:
+        return False
+    if (1 in differences):
+        differences.remove(1)
+    else:
+        return False
+    return (2 in differences)
