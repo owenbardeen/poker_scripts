@@ -3,10 +3,11 @@
 Welcome to my poker scripts! These are here to help me and whoever finds it useful gain familiarity with pre-flop
 ranges/strategy.
 
-What's next: I want to finish a function that tells the user whether or not to continuation bet a flop. This
-is pretty complicated as it has to assess ranges.
+I have a relatively basic GUI that I update whenever I make a new function or feel some inspiration to improve its 
+appearance. I'm not much of a graphic designer but I'm pretty satisfied with how it looks.
 
-Then, I plan on adding a GUI that will make practicing using this program a lot more conducive towards learning.
+What's next: I want to finish a function that tells the user whether or not to continuation bet a flop. This
+is pretty complicated as it has to assess ranges. After that, general flop strategy is next.
 
 Turn and river strategy are yet to be added. I am not very familiar with optimal turn/river strategy, as they are
 more complicated. This makes them difficult to code in and they tend to be more computation heavy due to many
