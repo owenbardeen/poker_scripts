@@ -9,9 +9,10 @@ appearance. I'm not much of a graphic designer but I'm pretty satisfied with how
 What's next: I want to finish a function that tells the user whether or not to continuation bet a flop. This
 is pretty complicated as it has to assess ranges. After that, general flop strategy is next.
 
-Turn and river strategy are yet to be added. I am not very familiar with optimal turn/river strategy, as they are
-more complicated. This makes them difficult to code in and they tend to be more computation heavy due to many
-combinations of hands as opposed to the 2 cards you have pre-flop and 5 cards (1 exact hand) you have on the flop.
+Turn and river strategy are yet to be added. I am not very familiar with optimal turn/river strategy, as they are more 
+complicated. This makes them difficult to code in and they tend to be more computation heavy due to many combinations 
+of hands as opposed to the 2 cards you have pre-flop and 5 cards (1 exact hand) you have on the flop. Comprehensively 
+covering flop strategy will take awhile so I'll cross the bridge of further streets when I get to it.
 
 File guide:
 
@@ -38,4 +39,13 @@ aces_vs_wrld - simulation I ran to see how often aces has the best hand six-hand
 expanding this to to add equities and calculate it for different ranges/kinds of flops.
 
 pf_stats - simulation I ran to see how often one flops hands such as a pair, a flush draw, etc.
+
+GUI UPDATES
+
+12/23/22
+Having finally finished finals, I've had some time to work on the GUI consistently. Updates include:
+-improved "look" of screen after making decision
+-updated ranges according to Johnathan Little's pre-flop charts, which are more accurate in terms of GTO optimal strategy
+-BTS: working on function that allows user to manually update opening pre-flop ranges. This will be included in a new settings bar.
+-BTS: 
 
