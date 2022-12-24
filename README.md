@@ -16,7 +16,9 @@ covering flop strategy will take awhile so I'll cross the bridge of further stre
 
 File guide:
 
+
 TRAINING
+
 
 initiation - creates the "deck" and adds useful functions for sorting and extracting information from cards
 
@@ -33,14 +35,18 @@ c_bet_flop - (in progress) puts user in a seat having raised PF, their hand, a f
 or not to continuation bet. It currently has basic functionality, but I'd like to consider ranges, and add
 a feature that asks for sizing if one does continuation-bet.
 
+
 SIMULATIONS
+
 
 aces_vs_wrld - simulation I ran to see how often aces has the best hand six-handed post-flop. Thinking about
 expanding this to to add equities and calculate it for different ranges/kinds of flops.
 
 pf_stats - simulation I ran to see how often one flops hands such as a pair, a flush draw, etc.
 
+
 GUI UPDATES
+
 
 12/23/22
 
