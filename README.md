@@ -45,8 +45,11 @@ GUI UPDATES
 12/23/22
 Having finally finished finals, I've had some time to work on the GUI consistently. Updates include:
 -improved "look" of screen after making decision
+
 -updated ranges according to Johnathan Little's pre-flop charts, which are more accurate in terms of GTO optimal strategy
+
 -BTS: working on function that allows user to manually update opening pre-flop ranges. This will be included in a new settings bar.
+
 -BTS: wrote more appropriate function for assessing state of flop. I think I will end up with multiple functions that assess 
 different qualities of the flop and use them in tandem to determine what to do. Coding in even simple flop strategy is turning out to be 
 difficult, but I'm welcome for the challenge.
