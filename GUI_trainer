@@ -4,7 +4,8 @@ import random
 from PIL import ImageTk, Image
 
 positions = [["under the gun", "1", 1], ["hijack", "2", 2], ["cutoff", "3", 3], 
-["button", "4", 4], ["small blind", "5", 5]]
+["button", "4", 4], ["small blind", "5", 5], ["big blind", "6", 6]]
+
 def name(position):
     return position[0]
 def index(position):
@@ -196,14 +197,338 @@ def find_value(hand):
     else:
         x = 2
     return x + (highest/100)
+def assess_wetness(card1, card2, card3):
+    # determines how "wet" a flop is
+    wetness = 0
+
+    # suitedness
+    if (card1[2] == card2[2] and card2[2] == card3[2]):
+        wetness += 2
+    elif (card1[2] == card2[2] or card2[2] == card3[2] or card1[2] == card3[2]):
+        wetness += 1
+    values = [card1[1], card2[1], card3[1]]
+    first = max(values)
+    values.remove(first)
+    second = max(values)
+    values.remove(second)
+    third = values[0]
+    sorted_values = [first, second, third]
+    d1 = first-second
+    d2 = second - third
+
+    # paired boards
+    if (first == second or second == third or first == third):
+        return 0
+        # bone dry
+
+    # how many broadway cards
+    if (first > 10):
+        if (second > 10):
+            if (third > 10):
+                wetness += 2
+            else:
+                wetness += 1
+        else:
+            wetness += 0
+    else:
+        wetness += 0
+    return wetness
+def flop_favors_agg(card1, card2, card3):
+    number1 = number(card1)
+    number2 = number(card2)
+    number3 = number(card3)
+    if (number1 < 11 & number1 > 5):
+        if (number2 < 11 & number2 > 5) | (number3 < 11 & number3 > 5):
+            return 0
+    elif (number2 < 11 & number2 > 5) & (number3 < 11 & number3 > 5):
+        return 0
+    else:
+        return 1
 
 root = Tk()
 root.title("Poker Trainer")
 root.geometry("410x430+550+150")
 
+table = ImageTk.PhotoImage(Image.open("images/table.png").resize((800, 400)))
+hero_img = ImageTk.PhotoImage(Image.open("images/Hero.png").resize((133, 36)))
+set_head = ImageTk.PhotoImage(Image.open("images/settings_header.png").resize((400, 100)))
+villain_img = ImageTk.PhotoImage(Image.open("images/Villain.png").resize((133, 36)))
+wow1 = ImageTk.PhotoImage(Image.open("images/wow.jpeg").resize((200,200)))
+wow2 = ImageTk.PhotoImage(Image.open("images/wow2.jpeg").resize((400,200)))
+wow3 = ImageTk.PhotoImage(Image.open("images/wow3.jpeg").resize((50,200)))
+wow4 = ImageTk.PhotoImage(Image.open("images/wow4.png").resize((200,200))) 
+decision_img = ImageTk.PhotoImage(Image.open("images/pfr_dcsn.png").resize((200, 200))) 
+decision_img2 = ImageTk.PhotoImage(Image.open("images/decision.png").resize((200, 200)))
+raise_img = ImageTk.PhotoImage(Image.open("images/raise.png").resize((200, 200)))
+fold_img = ImageTk.PhotoImage(Image.open("images/fold.png").resize((200, 200)))
+limp_img = ImageTk.PhotoImage(Image.open("images/limp.png").resize((200, 200)))
+call_img = ImageTk.PhotoImage(Image.open("images/call.png").resize((200, 200)))
+threebet_img = ImageTk.PhotoImage(Image.open("images/3bet.png").resize((200, 200)))
+correct_img = ImageTk.PhotoImage(Image.open("images/correct.png").resize((200, 200)))
+incorrect_img = ImageTk.PhotoImage(Image.open("images/incorrect.png").resize((200, 200)))
+go_again_img = ImageTk.PhotoImage(Image.open("images/go_again.png").resize((300, 200)))
+back_menu_img = ImageTk.PhotoImage(Image.open("images/back_menu.png").resize((300, 200)))
+images_dict = {}
+for card in construct():
+    images_dict[name(card)] = ImageTk.PhotoImage(Image.open("images/"+name(card)+".png").resize((50, 70)))
+
+rows = 13
+cols = 13
+utg_range = [[0 for _ in range(rows)] for _ in range(cols)]
+hj_range = [[0 for _ in range(rows)] for _ in range(cols)]
+co_range = [[0 for _ in range(rows)] for _ in range(cols)]
+bu_range = [[0 for _ in range(rows)] for _ in range(cols)]
+sb_range = [[0 for _ in range(rows)] for _ in range(cols)]
+#1st = row, 2nd = col
+
+#make UTG range
+for i in range(3):
+    for j in range(5):
+        utg_range[i][j] = hj_range[i][j] = co_range[i][j] = bu_range[i][j] = sb_range[i][j] = 1
+utg_range[3][0] = utg_range[3][3] = utg_range[3][4] = utg_range[4][4] = utg_range[4][5] = utg_range[5][5] = utg_range[6][6] = utg_range[7][7] = 1
+
+for i in range(13):
+    hj_range[0][i] = co_range[0][i] = bu_range[0][i] = sb_range[0][i] = 1
+    #fills in first row, all suited aces
+
+#makes pocket pairs, etc.
+for i in range(3, 9):
+    hj_range[i][i] = co_range[i][i] = bu_range[i][i] = sb_range[i][i] = 1
+
+#make HJ range
+hj_range[3][0] = hj_range[3][1] = hj_range[3][4] = hj_range[4][0] = hj_range[4][5] = hj_range[5][6] = 1
+
+#make CO/BU/SB pocket pairs
+for i in range(9, 13):
+    co_range[i][i] = bu_range[i][i] = sb_range[i][i] = 1
+
+#make CO range
+for i in range(5):
+    for j in range(6):
+        co_range[i][i] = 1
+co_range[1][6] = co_range[4][6] = co_range[5][0] = co_range[5][4] = co_range[5][6] = co_range[5][7] = co_range[6][7] = co_range[7][8] = 1
+
+#make BU range
+for i in range(3):
+    for j in range(13):
+        bu_range[i][j] = 1
+for i in range(3, 7):
+    for j in range(9):
+        bu_range[i][j] = 1
+for i in range(7, 13):
+    bu_range[i][0] = 1
+bu_range[7][6] = bu_range[7][8] = bu_range[7][9] = bu_range[8][9] = bu_range[8][10] = bu_range[9][10] = bu_range[9][11] = bu_range[10][11] = bu_range[11][12] = 1
+
+#make SB range
+for i in range(2):
+    for j in range(13):
+        sb_range[i][j] = 1
+for i in range(13):
+    sb_range[i][0] = 1
+for i in range(6):
+    for j in range(8):
+        sb_range[i][j] = 1
+for j in range(4, 9):
+    sb_range[6][j] = 1
+for j in range(6, 10):
+    sb_range[7][j] = 1
+sb_range[8][9] = sb_range[9][10] = sb_range[10][11] = 1
+
+
+# VS
+
+hjvsutg_range = [[0 for _ in range(rows)] for _ in range(cols)]
+covsutg_range = [[0 for _ in range(rows)] for _ in range(cols)]
+covshj_range = [[0 for _ in range(rows)] for _ in range(cols)]
+buvshj_range = [[0 for _ in range(rows)] for _ in range(cols)]
+buvsco_range = [[0 for _ in range(rows)] for _ in range(cols)]
+sbvsutg_range = [[0 for _ in range(rows)] for _ in range(cols)]
+sbvshj_range = [[0 for _ in range(rows)] for _ in range(cols)]
+sbvsco_range = [[0 for _ in range(rows)] for _ in range(cols)]
+sbvsbu_range = [[0 for _ in range(rows)] for _ in range(cols)]
+bbvsutg_range = [[0 for _ in range(rows)] for _ in range(cols)]
+bbvshj_range = [[0 for _ in range(rows)] for _ in range(cols)]
+bbvsco_range = [[0 for _ in range(rows)] for _ in range(cols)]
+bbvsbu_range = [[0 for _ in range(rows)] for _ in range(cols)]
+bbvssb_range = [[0 for _ in range(rows)] for _ in range(cols)]
+
+# HJ versus UTG range
+# call or more
+for i in range(9):
+    hjvsutg_range[i][i] = 1
+hjvsutg_range[0][4] = hjvsutg_range[1][3] = hjvsutg_range[1][4] = hjvsutg_range[2][3] = hjvsutg_range[3][4] = hjvsutg_range[4][5] = hjvsutg_range[5][6] = hjvsutg_range[6][7] = 1
+
+# 3 bet
+for i in range(3):
+    hjvsutg_range[i][i] = 2
+for i in range(1, 3):
+    hjvsutg_range[0][i] = 2
+for i in range(3):
+    hjvsutg_range[1][i] = 2
+for i in range(9, 13):
+    hjvsutg_range[0][i] = 2
+hjvsutg_range[2][0] = hjvsutg_range[2][1] = 2
+hjvsutg_range[3][0] = hjvsutg_range[4][0] = 2
+hjvsutg_range[7][8] = hjvsutg_range[8][9] = 2
+
+# CO vs UTG range
+covsutg_range = hjvsutg_range
+covsutg_range[10][10] = 1
+covsutg_range[6][7] = 2
+covsutg_range[4][0] = 0
+
+# BU vs UTG range
+# call / 3 bet
+buvsutg_range = covsutg_range
+buvsutg_range[6][7] = buvsutg_range[7][8] = 1
+buvsutg_range[8][9] = buvsutg_range[9][10] = 2
+for i in range(6, 13):
+    buvsutg_range[0][i] = 2
+buvsutg_range[0][5] = 1
+buvsutg_range[2][1] = 1
+buvsutg_range[3][0] = 1
+buvsutg_range[3][1] = 2
+buvsutg_range[4][0] = 2
+buvsutg_range[1][2] = 1
+for i in range(9, 13):
+    buvsutg_range[i][i] = 1
+
+# fixed ranges down to here
+
+# SB vs UTG range
+# all 3 bet
+for i in range(5):
+    sbvsutg_range[0][i] = 2
+    sbvsutg_range[1][i] = 2
+sbvsutg_range[0][5] = sbvsutg_range[0][9] = sbvsutg_range[0][10] = 2
+sbvsutg_range[2][0] = sbvsutg_range[2][3] = 2
+for i in range(2, 5):
+    sbvsutg_range[i][i] = 2
+
+# CO vs HJ range
+# call
+for i in range(3):
+    for j in range(4):
+        covshj_range[i][j] = 1
+for i in range(3, 9):
+    covshj_range[i][i] = 1
+covshj_range[0][4] = covshj_range[3][0] = covshj_range[3][4] = 1
+
+# 3 bet
+for i in range(5):
+    covshj_range[i][i] = 2
+for i in range(1, 7):
+    covshj_range[0][i] = 2
+for i in range(5):
+    covshj_range[1][i] = 2
+for i in range(4):
+    covshj_range[2][i] = 2
+covshj_range[0][9] = 2
+covshj_range[0][10] = 2
+
+# BU vs HJ range
+buvshj_range = covshj_range
+for i in range(9, 13):
+    buvshj_range[i][i] = 1
+buvshj_range[2][4] = buvshj_range[4][5] = 1
+
+# SB vs HJ range
+# all 3 bet
+for i in range(5):
+    sbvshj_range[i][i] = 2
+for i in range(1, 6):
+    sbvshj_range[0][i] = 2
+for i in range(5):
+    sbvshj_range[1][i] = 2
+for i in range(4):
+    sbvshj_range[2][i] = 2
+sbvshj_range[0][9] = 2
+sbvshj_range[0][10] = 2
+
+# BU vs CO range
+# call
+for i in range(3):
+    for j in range(5):
+        buvsco_range[i][j] = 1
+for i in range(3, 8):
+    buvsco_range[i-1][i] = buvsco_range[i][i] = 1
+buvsco_range[0][5] = buvsco_range[0][6] = buvsco_range[3][0] = buvsco_range[3][1] = buvsco_range[4][0] = buvsco_range[8][8] = 1
+
+# 3 bet
+for i in range(4):
+    for j in range(5):
+        buvsco_range[i][j] = 2
+buvsco_range[4][0] = 2
+buvsco_range[4][4] = 2
+buvsco_range[0][5] = 2
+buvsco_range[1][5] = 2
+buvsco_range[0][9] = 2
+buvsco_range[0][10] = 2
+
+# SB vs CO range
+# all 3 bet
+for i in range(3):
+    for j in range(5):
+        sbvsco_range[i][j] = 2
+for i in range(3, 6):
+    sbvsco_range[i][i] = 2
+sbvsco_range[0][5] = 2
+sbvsco_range[0][9] = 2
+sbvsco_range[0][10] = 2
+sbvsco_range[0][11] = 2
+sbvsco_range[0][12] = 2
+sbvsco_range[3][0] = 2
+sbvsco_range[3][1] = 2
+sbvsco_range[3][4] = 2
+
+# SB vs BU range
+# all 3 bet
+for i in range(3):
+    for j in range(6):
+        sbvsbu_range[i][j] = 2
+for i in range(3, 8):
+    sbvsbu_range[i][i] = 2
+for i in range(6, 12):
+    sbvsbu_range[0][i] = 2
+sbvsbu_range[3][0] = 2
+sbvsbu_range[3][1] = 2
+sbvsbu_range[3][4] = 2
+sbvsbu_range[4][0] = 2
+sbvsbu_range[4][5] = 2
+
+# BB vs UTG range
+
+def get_hand_in_range(chart, value):
+    suits = ["hearts", "diamonds", "clubs", "spades"]
+    index_to_card = ["ace", "king", "queen", "jack", "ten", "nine", "eight", "seven", "six", "five", "four", "three", "two"]
+    def random_indices():
+        indices = range(13)
+        a = random.choice(indices)
+        b = random.choice(indices)
+        return a, b
+    a, b = random_indices()
+    same_suit = False
+    while chart[a][b] != value:
+        a, b = random_indices()
+    if b > a:
+        same_suit = True
+    suit1 = random.choice(suits)
+    if same_suit:
+        suit2 = suit1
+    else:
+        suits.remove(suit1)
+        suit2 = random.choice(suits)
+    name1 = index_to_card[a] + "_of_" + suit1
+    name2 = index_to_card[b] + "_of_" + suit2
+    value1 = 14 - a
+    value2 = 14 - b
+    card1 = [name1, value1, suit1]
+    card2 = [name2, value2, suit2]
+    return card1, card2
+
 def pfr():
     pfr_window = Toplevel()
-    pfr_window.title("Pre-flop Practice")
+    pfr_window.title("Pre-flop Practice: Open Raising")
     pfr_window.geometry("800x610+300+100")
     pfr_window.iconbitmap("poker.png")
 
@@ -212,69 +537,7 @@ def pfr():
     card1 = random.choice(possible_cards)
     possible_cards.remove(card1)
     card2 = random.choice(possible_cards)
-    position = random.choice(positions)
-
-    rows = 13
-    cols = 13
-    utg_range = [[0 for _ in range(rows)] for _ in range(cols)]
-    hj_range = [[0 for _ in range(rows)] for _ in range(cols)]
-    co_range = [[0 for _ in range(rows)] for _ in range(cols)]
-    bu_range = [[0 for _ in range(rows)] for _ in range(cols)]
-    sb_range = [[0 for _ in range(rows)] for _ in range(cols)]
-    #1st = row, 2nd = col
-
-    #make UTG range
-    for i in range(3):
-        for j in range(5):
-            utg_range[i][j] = hj_range[i][j] = co_range[i][j] = bu_range[i][j] = sb_range[i][j] = 1
-    utg_range[3][0] = utg_range[3][3] = utg_range[3][4] = utg_range[4][4] = utg_range[4][5] = utg_range[5][5] = utg_range[6][6] = utg_range[7][7] = 1
-
-    for i in range(13):
-        hj_range[0][i] = co_range[0][i] = bu_range[0][i] = sb_range[0][i] = 1
-        #fills in first row, all suited aces
-
-    #makes pocket pairs, etc.
-    for i in range(3, 9):
-        hj_range[i][i] = co_range[i][i] = bu_range[i][i] = sb_range[i][i] = 1
-
-    #make HJ range
-    hj_range[3][0] = hj_range[3][1] = hj_range[3][4] = hj_range[4][0] = hj_range[4][5] = hj_range[5][6] = 1
-
-    #make CO/BU/SB pocket pairs
-    for i in range(9, 13):
-        co_range[i][i] = bu_range[i][i] = sb_range[i][i] = 1
-
-    #make CO range
-    for i in range(5):
-        for j in range(6):
-            co_range[i][i] = 1
-    co_range[1][6] = co_range[4][6] = co_range[5][0] = co_range[5][4] = co_range[5][6] = co_range[5][7] = co_range[6][7] = co_range[7][8] = 1
-
-    #make BU range
-    for i in range(3):
-        for j in range(13):
-            bu_range[i][j] = 1
-    for i in range(3, 7):
-        for j in range(9):
-            bu_range[i][j] = 1
-    for i in range(7, 13):
-        bu_range[i][0] = 1
-    bu_range[7][6] = bu_range[7][8] = bu_range[7][9] = bu_range[8][9] = bu_range[8][10] = bu_range[9][10] = bu_range[9][11] = bu_range[10][11] = bu_range[11][12] = 1
-
-    #make SB range
-    for i in range(2):
-        for j in range(13):
-            sb_range[i][j] = 1
-    for i in range(13):
-        sb_range[i][0] = 1
-    for i in range(6):
-        for j in range(8):
-            sb_range[i][j] = 1
-    for j in range(4, 9):
-        sb_range[6][j] = 1
-    for j in range(6, 10):
-        sb_range[7][j] = 1
-    sb_range[8][9] = sb_range[9][10] = sb_range[10][11] = 1
+    position = random.choice(positions[:5])
 
     a, b = indices(card1, card2)
 
@@ -315,16 +578,16 @@ def pfr():
         x2 = 465
         y2 = 120
 
-    table = ImageTk.PhotoImage(Image.open("images/table.png").resize((800, 400)))
+    #table = ImageTk.PhotoImage(Image.open("images/table.png").resize((800, 400)))
     table_label = Label(pfr_window, image=table)
     table_label.grid(row=0, column=0)
 
-    hero_img = ImageTk.PhotoImage(Image.open("images/Hero.png").resize((133, 36)))
+    #hero_img = ImageTk.PhotoImage(Image.open("images/Hero.png").resize((133, 36)))
     hero_lbl = Label(pfr_window, image=hero_img)
     hero_lbl.place(x=x2, y=y2)
     
-    first_card = ImageTk.PhotoImage(Image.open("images/"+name(card1)+".png").resize((50,70)))
-    second_card = ImageTk.PhotoImage(Image.open("images/" + name(card2)+".png").resize((50,70)))
+    first_card = images_dict[name(card1)]
+    second_card = images_dict[name(card2)]
 
     card_uno = Label(pfr_window, image=first_card)
     card_uno.place(x=x, y=y)
@@ -336,38 +599,45 @@ def pfr():
 
     #myposition = Label(pfr_window, text="Your position: " + name(position))
     #myposition.grid(row=1, column=0)
-
-    wow1 = ImageTk.PhotoImage(Image.open("images/wow.jpeg").resize((200,200)))
-    wow2 = ImageTk.PhotoImage(Image.open("images/wow2.jpeg").resize((400,200)))
-    wow3 = ImageTk.PhotoImage(Image.open("images/wow3.jpeg").resize((50,200)))
-    wow4 = ImageTk.PhotoImage(Image.open("images/wow4.png").resize((200,200)))  
     
-    wow1l = Label(pfr_window, image=wow1)
-    wow2l = Label(pfr_window, image=wow2)
-    wow4l = Label(pfr_window, image=wow4)
+    #wow1l = Label(pfr_window, image=wow1)
+    #wow2l = Label(pfr_window, image=wow2)
+    #wow4l = Label(pfr_window, image=wow4)
+
     
     def reset_pfr():
         pfr_window.destroy()
+        #if is_random:
+            #rando()
+        #else:
         pfr()
 
     def rais():
-        again_button = Button(pfr_window, text="Go Again", command=reset_pfr)
-        again_button.grid(row=5, column=0)
+        #again_button = Button(pfr_window, text="Go Again", command=reset_pfr)
+        #again_button.grid(row=5, column=0)
 
-        quit_button = Button(pfr_window, text="Back to Menu", command=pfr_window.destroy)
-        quit_button.grid(row=6, column=0)
+        #quit_button = Button(pfr_window, text="Back to Menu", command=pfr_window.destroy)
+        #quit_button.grid(row=6, column=0)
+
+        go_again_b = Button(pfr_window, image=go_again_img, command=reset_pfr)
+        back_menu_b = Button(pfr_window, image=back_menu_img, command=pfr_window.destroy)
+
+        go_again_b.place(x=200,y=400)
+        back_menu_b.place(x=500, y=400)
+
         if decision == 1:
-            newlabel = Label(pfr_window, text="Correct!")
-            newlabel.grid(row=4, column=0)
+            newlabel = Label(pfr_window, image=correct_img)
+            newlabel.place(x=0, y=400)
             raise_button.destroy()
             fold_button.destroy()
             decision_lbl.destroy()
-            wow1l.place(x=0, y=400)
-            wow2l.place(x=200, y=400)
-            wow4l.place(x=600, y=400)
+            limp_button.destroy()
+            #wow1l.place(x=0, y=400)
+            #wow2l.place(x=200, y=400)
+            #wow4l.place(x=600, y=400)
         else:
-            newlabel = Label(pfr_window, text="Incorrect")
-            newlabel.grid(row=4, column=0)
+            newlabel = Label(pfr_window, image=incorrect_img)
+            newlabel.place(x=0, y=400)
         #newlabel.grid(row=4, column=0)
         
         #again_button = Button(pfr_window, text="Go Again", command=reset_pfr)
@@ -377,24 +647,31 @@ def pfr():
         #quit_button.grid(row=6, column=0)
 
     def fold():
-        again_button = Button(pfr_window, text="Go Again", command=reset_pfr)
-        again_button.grid(row=5, column=0)
+        #again_button = Button(pfr_window, text="Go Again", command=reset_pfr)
+        #again_button.grid(row=5, column=0)
 
-        quit_button = Button(pfr_window, text="Back to Menu", command=pfr_window.destroy)
-        quit_button.grid(row=6, column=0)
+        #quit_button = Button(pfr_window, text="Back to Menu", command=pfr_window.destroy)
+        #quit_button.grid(row=6, column=0)
+
+        go_again_b = Button(pfr_window, image=go_again_img, command=reset_pfr)
+        back_menu_b = Button(pfr_window, image=back_menu_img, command=pfr_window.destroy)
+
+        go_again_b.place(x=200,y=400)
+        back_menu_b.place(x=500, y=400)
+
         if decision == 0:
-            newlabel = Label(pfr_window, text="Correct!")
-            newlabel.grid(row=4, column=0)
+            newlabel = Label(pfr_window, image=correct_img)
+            newlabel.place(x=0, y=400)
             raise_button.destroy()
             fold_button.destroy()
+            limp_button.destroy()
             decision_lbl.destroy()
-            wow1l.place(x=0, y=400)
-            wow2l.place(x=200, y=400)
-            wow4l.place(x=600, y=400)
+            #wow1l.place(x=0, y=400)
+            #wow2l.place(x=200, y=400)
+            #wow4l.place(x=600, y=400)
         else:
-            newlabel = Label(pfr_window, text="Incorrect")
-            newlabel.grid(row=4, column=0)
-        #newlabel.grid(row=4, column=0)
+            newlabel = Label(pfr_window, image=incorrect_img)
+            newlabel.place(x=0, y=400)
         
         #again_button = Button(pfr_window, text="Go Again", command=reset_pfr)
         #again_button.grid(row=5, column=0)
@@ -402,79 +679,53 @@ def pfr():
         #quit_button = Button(pfr_window, text="Back to Menu", command=pfr_window.destroy)
         #quit_button.grid(row=6, column=0)
 
-    decision_img = ImageTk.PhotoImage(Image.open("images/Decision.png").resize((400, 200)))
+    def limp():
+        # again_button = Button(pfr_window, text="Go Again", command=reset_pfr)
+        # again_button.grid(row=5, column=0)
+
+        # quit_button = Button(pfr_window, text="Back to Menu", command=pfr_window.destroy)
+        # quit_button.grid(row=6, column=0)
+
+        # newlabel = Label(pfr_window, text="Incorrect")
+        # newlabel.grid(row=4, column=0)
+
+        newlabel = Label(pfr_window, image=incorrect_img)
+        newlabel.place(x=0, y=400)
+
+        go_again_b = Button(pfr_window, image=go_again_img, command=reset_pfr)
+        back_menu_b = Button(pfr_window, image=back_menu_img, command=pfr_window.destroy)
+
+        go_again_b.place(x=200,y=400)
+        back_menu_b.place(x=500, y=400)
+
     decision_lbl = Label(pfr_window, image=decision_img)
-    decision_lbl.place(x=200, y=400)
+    decision_lbl.place(x=0, y=400)
 
-    raise_img = ImageTk.PhotoImage(Image.open("images/raise.png").resize((200, 200)))
     raise_button = Button(pfr_window, text="Open Raise", command = rais, padx=50, pady=50, image=raise_img)
-    raise_button.place(x=0, y=400)
+    raise_button.place(x=200, y=400)
 
-    fold_img = ImageTk.PhotoImage(Image.open("images/fold.png").resize((200, 200)))
     fold_button = Button(pfr_window, text="Fold", command = fold, padx=50, pady=50, image=fold_img)
-    fold_button.place(x=600, y=400)
+    fold_button.place(x=400, y=400)
+
+    limp_button = Button(pfr_window, command = limp, padx=50, pady=50, image=limp_img)
+    limp_button.place(x=600, y=400)
 
     pfr_window.mainloop()
 
 def cpr():
     cpr_window = Toplevel()
-    cpr_window.title("Pre-flop Practice")
+    cpr_window.title("Pre-flop Practice: Facing Open Raise")
     cpr_window.geometry("800x610+300+100")
     cpr_window.iconbitmap("poker.png")
     rows=13
     cols=13
     cards=construct()
-
-    hjvsutg_range = [[0 for _ in range(rows)] for _ in range(cols)]
-    covsutg_range = [[0 for _ in range(rows)] for _ in range(cols)]
-    covshj_range = [[0 for _ in range(rows)] for _ in range(cols)]
-    buvshj_range = [[0 for _ in range(rows)] for _ in range(cols)]
-    buvsco_range = [[0 for _ in range(rows)] for _ in range(cols)]
-
-    # HJ versus UTG range
-    for i in range(9):
-        hjvsutg_range[i][i] = 1
-    hjvsutg_range[0][1] = hjvsutg_range[0][2] = hjvsutg_range[0][3] = hjvsutg_range[1][0] = hjvsutg_range[1][2] = hjvsutg_range[2][0] = 1
-
-    # CO vs UTG range
-    for i in range(10):
-        covsutg_range[i][i] = 1
-    covsutg_range[0][1] = covsutg_range[0][2] = covsutg_range[0][3] = covsutg_range[1][0] = covsutg_range[1][2] = covsutg_range[2][0] = covsutg_range[2][3] = 1
-
-    # BU vs UTG range
-    buvsutg_range = covsutg_range
-    for i in range(9, 13):
-        buvsutg_range[i][i] = 1
-    buvsutg_range[0][4] = buvsutg_range[1][3] = buvsutg_range[3][4] = buvsutg_range[4][5]
-
-    # CO vs HJ range
-    for i in range(3):
-        for j in range(4):
-            covshj_range[i][j] = 1
-    for i in range(3, 9):
-        covshj_range[i][i] = 1
-    covshj_range[0][4] = covshj_range[3][0] = covshj_range[3][4] = 1
-
-    # BU vs HJ range
-    buvshj_range = covshj_range
-    for i in range(9, 13):
-        buvshj_range[i][i] = 1
-    buvshj_range[2][4] = buvshj_range[4][5] = 1
-
-    # BU vs CO range
-    for i in range(3):
-        for j in range(5):
-            buvsco_range[i][j] = 1
-    for i in range(3, 8):
-        buvsco_range[i-1][i] = buvsco_range[i][i] = 1
-    buvsco_range[0][5] = buvsco_range[0][6] = buvsco_range[3][0] = buvsco_range[3][1] = buvsco_range[4][0] = buvsco_range[8][8] = 1
-
-    altered_positions = positions[:3]
+    
+    altered_positions = positions[:5]
     raise_position = random.choice(altered_positions)
-    altered2 = positions[:4]
+    this_number = raise_position[2]
+    altered2 = positions[this_number:]
     your_position = random.choice(altered2)
-    while your_position[2] <= raise_position[2]:
-        your_position = random.choice(positions)
     possible_cards = cards
     card1 = random.choice(possible_cards)
     possible_cards.remove(card1)
@@ -532,20 +783,59 @@ def cpr():
             relevant_chart = buvsco_range
             x3 = 10
             y3 = 109
-    else:
+    elif(your_position[1] == "5"):
         x = 485
         y = 39
+        x2 = 469
+        y2 = 120
+        if (raise_position[1] == "1"):
+            relevant_chart = sbvsutg_range
+            x3 = 473
+            y3 = 238
+        elif (raise_position[1] == "2"):
+            relevant_chart = sbvshj_range
+            x3 = 215
+            y3 = 238
+        elif(raise_position[1] == "3"):
+            relevant_chart = sbvsco_range
+            x3 = 10
+            y3 = 109
+        else:
+            relevant_chart = sbvsbu_range
+            x3 = 210
+            y3 = 120
+    else: #BB
+        x = 685
+        y = 140
+        x2 = 672
+        y2 = 225
+        if (raise_position[1] == "1"):
+            relevant_chart = bbvsutg_range
+            x3 = 473
+            y3 = 238
+        elif (raise_position[1] == "2"):
+            relevant_chart = bbvshj_range
+            x3 = 215
+            y3 = 238
+        elif(raise_position[1] == "3"):
+            relevant_chart = bbvsco_range
+            x3 = 10
+            y3 = 109
+        elif(raise_position[1] == "4"):
+            relevant_chart = bbvsbu_range
+            x3 = 210
+            y3 = 120
+        else:
+            relevant_chart = bbvssb_range
+            x3 = 469
+            y3 = 120
 
     decision = relevant_chart[a][b]
 
     # ADD DECISIONS
 
-    table = ImageTk.PhotoImage(Image.open("images/table.png").resize((800, 400)))
     table_label = Label(cpr_window, image=table)
-    table_label.place(x=0, y=0)
-
-    hero_img = ImageTk.PhotoImage(Image.open("images/Hero.png").resize((133, 36)))
-    villain_img = ImageTk.PhotoImage(Image.open("images/Villain.png").resize((133, 36)))
+    table_label.grid(row=0, column=0)
 
     hero_lbl = Label(cpr_window, image=hero_img)
     villain_lbl = Label(cpr_window, image=villain_img)
@@ -553,18 +843,13 @@ def cpr():
     hero_lbl.place(x=x2, y=y2)
     villain_lbl.place(x=x3, y=y3)
 
-    first_card = ImageTk.PhotoImage(Image.open("images/"+name(card1)+".png").resize((50,70)))
-    second_card = ImageTk.PhotoImage(Image.open("images/" + name(card2)+".png").resize((50,70)))
+    first_card = images_dict[name(card1)]
+    second_card = images_dict[name(card2)]
 
     card_uno = Label(cpr_window, image=first_card)
     card_uno.place(x=x, y=y)
     card_dos = Label(cpr_window, image=second_card)
     card_dos.place(x=x+55, y=y)
-
-    wow1 = ImageTk.PhotoImage(Image.open("images/wow.jpeg").resize((200,200)))
-    wow2 = ImageTk.PhotoImage(Image.open("images/wow2.jpeg").resize((400,200)))
-    wow3 = ImageTk.PhotoImage(Image.open("images/wow3.jpeg").resize((50,200)))
-    wow4 = ImageTk.PhotoImage(Image.open("images/wow4.png").resize((200,200)))  
     
     wow1l = Label(cpr_window, image=wow1)
     wow2l = Label(cpr_window, image=wow2)
@@ -575,78 +860,448 @@ def cpr():
         cpr()
     
     def call():
-        again_button = Button(cpr_window, text="Go Again", command=reset_cpr)
-        again_button.grid(row=5, column=0)
+        # again_button = Button(cpr_window, text="Go Again", command=reset_cpr)
+        # again_button.grid(row=5, column=0)
 
-        quit_button = Button(cpr_window, text="Back to Menu", command=cpr_window.destroy)
-        quit_button.grid(row=6, column=0)
+        # quit_button = Button(cpr_window, text="Back to Menu", command=cpr_window.destroy)
+        # quit_button.grid(row=6, column=0)
+
+        go_again_b = Button(pfr_window, image=go_again_img, command=reset_cpr)
+        back_menu_b = Button(pfr_window, image=back_menu_img, command=cpr_window.destroy)
+
+        go_again_b.place(x=200,y=400)
+        back_menu_b.place(x=500, y=400)
+
         if decision == 1:
-            newlabel = Label(cpr_window, text="Correct!")
-            newlabel.grid(row=4, column=0)
+            newlabel = Label(pfr_window, image=correct_img)
+            newlabel.place(x=0, y=400)
             call_button.destroy()
             fold_button.destroy()
             decision_lbl.destroy()
+            threebet_button.destroy()
             wow1l.place(x=0, y=400)
             wow2l.place(x=200, y=400)
             wow4l.place(x=600, y=400)
         else:
-            newlabel = Label(cpr_window, text="Incorrect")
-            newlabel.grid(row=4, column=0)
+            newlabel = Label(pfr_window, image=incorrect_img)
+            newlabel.place(x=0, y=400)
     
     def fold():
-        again_button = Button(cpr_window, text="Go Again", command=reset_cpr)
-        again_button.grid(row=5, column=0)
+        # again_button = Button(cpr_window, text="Go Again", command=reset_cpr)
+        # again_button.grid(row=5, column=0)
 
-        quit_button = Button(cpr_window, text="Back to Menu", command=cpr_window.destroy)
-        quit_button.grid(row=6, column=0)
+        # quit_button = Button(cpr_window, text="Back to Menu", command=cpr_window.destroy)
+        # quit_button.grid(row=6, column=0)
+
+        go_again_b = Button(pfr_window, image=go_again_img, command=reset_cpr)
+        back_menu_b = Button(pfr_window, image=back_menu_img, command=cpr_window.destroy)
+
+        go_again_b.place(x=200,y=400)
+        back_menu_b.place(x=500, y=400)
+
         if decision == 0:
-            newlabel = Label(cpr_window, text="Correct!")
-            newlabel.grid(row=4, column=0)
+            newlabel = Label(pfr_window, image=correct_img)
+            newlabel.place(x=0, y=400)
             call_button.destroy()
             fold_button.destroy()
             decision_lbl.destroy()
+            threebet_button.destroy()
             wow1l.place(x=0, y=400)
             wow2l.place(x=200, y=400)
             wow4l.place(x=600, y=400)
         else:
-            newlabel = Label(cpr_window, text="Incorrect")
-            newlabel.grid(row=4, column=0)
+            newlabel = Label(pfr_window, image=incorrect_img)
+            newlabel.place(x=0, y=400)
     
-    call_img = ImageTk.PhotoImage(Image.open("images/call.png").resize((200, 200)))
+    def threebet():
+        # again_button = Button(cpr_window, text="Go Again", command=reset_cpr)
+        # again_button.grid(row=5, column=0)
+
+        # quit_button = Button(cpr_window, text="Back to Menu", command=cpr_window.destroy)
+        # quit_button.grid(row=6, column=0)
+
+        go_again_b = Button(pfr_window, image=go_again_img, command=reset_cpr)
+        back_menu_b = Button(pfr_window, image=back_menu_img, command=cpr_window.destroy)
+
+        go_again_b.place(x=200,y=400)
+        back_menu_b.place(x=500, y=400)
+
+        if decision == 2:
+            newlabel = Label(pfr_window, image=correct_img)
+            newlabel.place(x=0, y=400)
+            call_button.destroy()
+            fold_button.destroy()
+            decision_lbl.destroy()
+            threebet_button.destroy()
+            wow1l.place(x=0, y=400)
+            wow2l.place(x=200, y=400)
+            wow4l.place(x=600, y=400)
+        else:
+            newlabel = Label(pfr_window, image=incorrect_img)
+            newlabel.place(x=0, y=400)
+
     call_button = Button(cpr_window, text="Open Raise", command = call, padx=50, pady=50, image=call_img)
-    call_button.place(x=0, y=400)
-
-    fold_img = ImageTk.PhotoImage(Image.open("images/fold.png").resize((200, 200)))
     fold_button = Button(cpr_window, text="Fold", command = fold, padx=50, pady=50, image=fold_img)
-    fold_button.place(x=600, y=400)
-
-    decision_img = ImageTk.PhotoImage(Image.open("images/Decision.png").resize((400, 200)))
-    decision_lbl = Label(cpr_window, image=decision_img)
-    decision_lbl.place(x=200, y=400)
+    decision_lbl = Label(cpr_window, image=decision_img2)
+    threebet_button = Button(cpr_window, command = threebet, padx=50, pady=50, image=threebet_img)
+    # NEW
+    decision_lbl.place(x=0, y=400)
+    call_button.place(x=200, y=400)
+    fold_button.place(x=400, y=400)
+    threebet_button.place(x=600, y=400)
 
     cpr_window.mainloop()
 
-def rando():
+def flop_practice():
+    flop_window = Toplevel()
+    flop_window.title("Flop Practice")
+    flop_window.geometry("800x610+300+100")
+    flop_window.iconbitmap("poker.png")
+
+    cards = construct()
+    card1 = random.choice(cards)
+    cards.remove(card1)
+    card2 = random.choice(cards)
+    cards.remove(card2)
+    card3 = random.choice(cards)
+    cards.remove(card3)
+    hand1 = random.choice(cards)
+    cards.remove(hand1)
+    hand2 = random.choice(cards)
+
+    a, b = indices(hand1, hand2)
+
+    x = 0
+    y = 0
+    x2 = 0
+    y2 = 0
+
+    if (position[1] == "1"):
+        x = 485
+        y = 274
+        x2 = 473
+        y2 = 228
+    elif (position[1] == "2"):
+        x = 223
+        y = 274
+        x2 = 215
+        y2 = 228
+    elif (position[1] == "3"):
+        x = 22
+        y = 155
+        x2 = 10
+        y2 = 109
+    elif(position[1] == "4"):
+        x = 223
+        y = 39
+        x2 = 210
+        y2 = 120
+    else:
+        x = 485
+        y = 39
+        x2 = 465
+        y2 = 120
+    
+    table = ImageTk.PhotoImage(Image.open("images/table.png").resize((800, 400)))
+    table_label = Label(pfr_window, image=table)
+    table_label.grid(row=0, column=0)
+
+    hero_img = ImageTk.PhotoImage(Image.open("images/Hero.png").resize((133, 36)))
+    hero_lbl = Label(pfr_window, image=hero_img)
+    hero_lbl.place(x=x2, y=y2)
+    
+    first_card = ImageTk.PhotoImage(Image.open("images/"+name(hand1)+".png").resize((50,70)))
+    second_card = ImageTk.PhotoImage(Image.open("images/" + name(hand2)+".png").resize((50,70)))
+
+    card_uno = Label(pfr_window, image=first_card)
+    card_uno.place(x=x, y=y)
+    card_dos = Label(pfr_window, image=second_card)
+    card_dos.place(x=x+55, y=y)
+
+    #def bet_as_pf_agg():
+
+
+    possibilities = [bet_as_pf_agg, bet_as_pf_call]
+    to_do = random.choice(possibilities)
+    to_do()
+
+def pf_options():
+    pf_window = Toplevel()
+    pf_window.geometry("410x430+550+150")
+
+    def pf_back():
+        pf_window.destroy()
+
+    pf_welc_lbl = Label(pf_window, image=pf_welc_img)
+    pf_welc_lbl.grid(row=0, column=0)
+
+    pflopr_btn = Button(pf_window, padx=50, pady=30, command=pfr, image=pfr_img)
+    pflopr_btn.grid(row=1, column=0)
+
+    cprer_button = Button(pf_window, padx=50, pady=30, command=cpr, image=cpr_img)
+    cprer_button.grid(row=2, column=0)
+
+    pf_back_button = Button(pf_window, padx=50, pady=30, command=pf_back, image=backtomenu_img)
+    pf_back_button.grid(row=3, column=0)
+
+def pf_rando():
+    is_random = True
     functions = [pfr, cpr]
     my_func = random.choice(functions)
     my_func()
+
+def all_rando():
+    functions = [pfr, cpr, bet_flop, defend_flop]
+    my_func = random.choice(functions)
+    my_func()
+
+def bet_flop():
+    betf_window = Toplevel()
+    betf_window.title("Flop Practice")
+    betf_window.geometry("800x610+300+100")
+    betf_window.iconbitmap("poker.png")
+    # as open raiser
+    position = random.choice(positions[:5])
+    if position[2] == 1:
+        my_chart = utg_range
+        x = 485
+        y = 274
+        x2 = 473
+        y2 = 228
+    elif position[2] == 2:
+        my_chart = hj_range
+        x = 223
+        y = 274
+        x2 = 215
+        y2 = 228
+    elif position[2] == 3:
+        my_chart = co_range
+        x = 22
+        y = 155
+        x2 = 10
+        y2 = 109
+    elif position[2] == 4:
+        my_chart = bu_range
+        x = 223
+        y = 39
+        x2 = 210
+        y2 = 120
+    else:
+        my_chart = sb_range
+        x = 485
+        y = 39
+        x2 = 465
+        y2 = 120
+    card1, card2 = get_hand_in_range(my_chart, 1)
+
+    table_label = Label(betf_window, image=table)
+    table_label.grid(row=0, column=0)
+
+    hero_lbl = Label(betf_window, image=hero_img)
+    hero_lbl.place(x=x2, y=y2)
+    
+    first_card = images_dict[name(card1)]
+    second_card = images_dict[name(card2)]
+
+    card_uno = Label(betf_window, image=first_card)
+    card_uno.place(x=x, y=y)
+    card_dos = Label(betf_window, image=second_card)
+    card_dos.place(x=x+55, y=y)
+
+    # as 3 better
+    # new_pos = positions
+    # raiser_position = random.choice(new_pos[:5])
+    # my_index = raiser_position[2]
+    # new_pos = new_pos[my_index:]
+    # my_position = random.choice(new_pos)
+    # if raiser_position[2] == 1:
+    #     x3 = 473
+    #     y3 = 238
+    #     if my_position[2] == 2:
+    #         my_chart = hjvsutg_range
+    #     elif my_position[2] == 3:
+    #         my_chart = covsutg_range
+    #     elif my_position[2] == 4:
+    #         my_chart = buvsutg_range
+    #     elif my_position[2] == 5:
+    #         my_chart = sbvsutg_range
+    #     else:
+    #         my_chart = bbvsutg_range
+    # elif raiser_position[2] == 2:
+    #     x3 = 215
+    #     y3 = 238
+    #     if my_position[2] == 3:
+    #         my_chart = covshj_range
+    #     elif my_position[2] == 4:
+    #         my_chart = buvshj_range
+    #     elif my_position[2] == 5:
+    #         my_chart = sbvshj_range
+    #     else:
+    #         my_chart = bbvshj_range
+    # elif raiser_position[2] == 3:
+    #     x3 = 10
+    #     y3 = 109
+    #     if my_position[2] == 4:
+    #         my_chart = buvsco_range
+    #     elif my_position[2] == 5:
+    #         my_chart = sbvsco_range
+    #     else:
+    #         my_chart = bbvsco_range
+    # elif raiser_position[2] == 4:
+    #     x3 = 210
+    #     y3 = 120
+    #     if my_position[2] == 5:
+    #         my_chart = sbvsbu_range
+    #     else:
+    #         my_chart = bbvsbu_range
+    # else:
+    #     x3 = 469
+    #     y3 = 120
+    #     my_chart = bbvssb_range
+    # card1, card2 = get_hand_in_range(my_chart, 0) # change to 2
+    # print(name(card1))
+    # print(name(card2))
+
+def defend_flop():
+    a=0
+
+def flop_options():
+    flop_window = Toplevel()
+    flop_window.geometry("410x430+550+150")
+
+    def flop_back():
+        flop_window.destroy()
+
+    flop_welc_lbl = Label(flop_window, image=flop_welc_img)
+    flop_welc_lbl.grid(row=0, column=0)
+
+    bet_flop_btn = Button(flop_window, padx=50, pady=30, command=bet_flop, image=bet_flop_img)
+    bet_flop_btn.grid(row=1, column=0)
+
+    defend_flop_btn = Button(flop_window, padx=50, pady=30, command=defend_flop, image=defend_flop_img)
+    defend_flop_btn.grid(row=2, column=0)
+
+    flop_back_button = Button(flop_window, padx=50, pady=30, command=flop_back, image=backtomenu_img)
+    flop_back_button.grid(row=3, column=0)
+
+def settings():
+    set_win = Toplevel()
+    set_win.title("Settings")
+
+    def go_back():
+        set_win.destroy()
+
+    header_lbl = Label(set_win, image = set_head)
+    header_lbl.grid(row=0, column=0)
+
+
+
+def change_utg_range():
+    btns = []
+
+    change_range = Toplevel()
+    change_range.title("UTG Opening Range")
+
+    def toggle(num):
+        if btns[num].config("highlightbackground")[-1] == "white":
+            btns[num].config(highlightbackground = "green")
+        elif btns[num].config("highlightbackground")[-1] == "green":
+            btns[num].config(highlightbackground = "white")
+
+    def save():
+        count = 0
+        for btn in btns:
+            i = count // 13
+            j = count - (i * 13)
+            mynum = 0
+            if btns[count].config("highlightbackground")[-1] == "green":
+                mynum = 1
+            utg_range[i][j] = mynum
+            count += 1
+
+    def fir(i):
+        if i == 0:
+            return "A"
+        elif i == 1:
+            return "K"
+        elif i == 2:
+            return "Q"
+        elif i == 3:
+            return "J"
+        elif i == 4:
+            return "T"
+        elif i == 5:
+            return "9"
+        elif i == 6:
+            return "8"
+        elif i == 7:
+            return "7"
+        elif i == 8:
+            return "6"
+        elif i == 9:
+            return "5"
+        elif i == 10:
+            return "4"
+        elif i == 11:
+            return "3"
+        else:
+            return "2"
+
+    count = 0
+
+    def exit():
+        change_range.destroy()
+
+    for i in range(13):
+        for j in range(13):
+            if utg_range[i][j] == 1:
+                color = 'green'
+            elif utg_range[i][j] == 2:
+                color = 'blue'
+            else:
+                color = 'white'
+            if i > j:
+                mystring = fir(j) + fir(i)
+                mystring = mystring + "o"
+            elif i < j:
+                mystring = fir(i) + fir(j)
+                mystring = mystring + "s"
+            else:
+                mystring = fir(i) + fir(j)
+            btns.append(Button(change_range, highlightbackground=color, text=mystring, height=2, width=3, fg='black', command=lambda num=count: toggle(num)))
+            btns[count].grid(row=i, column=j)
+            count += 1
+
+    save_button = Button(change_range, text="Save", fg="black", command=save)
+    save_button.grid(row=0, column=13)
+
+    exit_button = Button(change_range, text="Exit", fg="black", command=exit)
+    exit_button.grid(row=1, column=13)
 
 welcome_img = ImageTk.PhotoImage(Image.open("images/welcome.png").resize((400, 100)))
 welcome_lbl = Label(root, image=welcome_img)
 welcome_lbl.grid(row=0, column=0)
 
+preflop_img = ImageTk.PhotoImage(Image.open("images/preflop.png").resize((400, 100)))
+preflop_btn = Button(root, padx=50, pady=30, command=pf_options,
+bg="#000000", fg="blue", image=preflop_img)
+preflop_btn.grid(row=1, column=0)
+
+postflop_img = ImageTk.PhotoImage(Image.open("images/postflop.png").resize((400, 100)))
+postflop_button = Button(root, padx=50, pady=30, command=flop_options,
+image=postflop_img)
+postflop_button.grid(row=2, column=0)
+
+settings_img = ImageTk.PhotoImage(Image.open("images/rando.png").resize((400, 100)))
+settings_button = Button(root, padx=50, pady=30, command=change_utg_range, image=settings_img)
+settings_button.grid(row=3, column=0)
+
+pf_welc_img = ImageTk.PhotoImage(Image.open("images/preflopwelcome.png").resize((400, 100)))
 pfr_img = ImageTk.PhotoImage(Image.open("images/pfr.png").resize((400, 100)))
-pfr_btn = Button(root, padx=50, pady=30, command=pfr,
-bg="#000000", fg="blue", image=pfr_img)
-pfr_btn.grid(row=1, column=0)
-
 cpr_img = ImageTk.PhotoImage(Image.open("images/cpr.png").resize((400, 100)))
-cpr_button = Button(root, padx=50, pady=30, command=cpr,
-image=cpr_img)
-cpr_button.grid(row=2, column=0)
-
-rand_img = ImageTk.PhotoImage(Image.open("images/rando.png").resize((400, 100)))
-rand_button = Button(root, padx=50, pady=30, command=rando, image=rand_img)
-rand_button.grid(row=3, column=0)
+backtomenu_img = ImageTk.PhotoImage(Image.open("images/backtomenu.png").resize((400, 100)))
+flop_welc_img = ImageTk.PhotoImage(Image.open("images/flop_welc_img.png").resize((400, 100)))
+bet_flop_img = ImageTk.PhotoImage(Image.open("images/bet_flop_img.png").resize((400, 100)))
+defend_flop_img = ImageTk.PhotoImage(Image.open("images/defend_flop_img.png").resize((400, 100)))
 
 root.mainloop()
