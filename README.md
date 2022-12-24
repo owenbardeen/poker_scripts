@@ -43,7 +43,9 @@ pf_stats - simulation I ran to see how often one flops hands such as a pair, a f
 GUI UPDATES
 
 12/23/22
+
 Having finally finished finals, I've had some time to work on the GUI consistently. Updates include:
+
 -improved "look" of screen after making decision
 
 -updated ranges according to Johnathan Little's pre-flop charts, which are more accurate in terms of GTO optimal strategy
