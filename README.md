@@ -62,3 +62,12 @@ Having finally finished finals, I've had some time to work on the GUI consistent
 different qualities of the flop and use them in tandem to determine what to do. Coding in even simple flop strategy is turning out to be 
 difficult, but I'm welcome for the challenge.
 
+1/13/23
+
+Break is coming to an end, so here's an update of what I've done.
+
+-improved flop assessment function and incorporated it into the post-flop decision making. It's a pretty crude function so I'd like to update it in the future. Also need to add sizing decisions.
+
+-started working on a function that helps visualize the opponent's range on a flop. It shows the number of top pairs, sets, etc. that the opponent holds. Also very crude right now, next steps are to include it in the GUI and generalize the ranges it takes.
+
+-finished preliminary range-changing function. Will add full integration once I'm done with the above two tasks.
